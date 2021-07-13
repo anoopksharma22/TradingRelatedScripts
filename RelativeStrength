@@ -1,0 +1,30 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+
+//@version=4
+study("Relative Strength", shorttitle="Relative Strength")
+
+//Input
+source = input(title="Source", type=input.source, defval=close)
+comparativeTickerId = input("NSE:NIFTY", type=input.symbol, title="Comparative Symbol") 
+length = input(123, type=input.integer, minval=1, title="Period")
+showZeroLine = input(defval=true, type=input.bool, title="Show Zero Line")
+showRefDateLbl = input(defval=true, type=input.bool, title="Show Reference Label")
+toggleRSColor = input(defval=true, type=input.bool, title="Toggle RS color on crossovers")
+showMA = input(defval=false, type=input.bool, title="Show Moving Average")
+lengthMA = input(61, type=input.integer, minval=1, title="Moving Average Period")
+
+//Set up
+baseSymbol = security(syminfo.tickerid, timeframe.period, source) 
+comparativeSymbol = security(comparativeTickerId, timeframe.period, source) 
+
+//Plot
+plot(showZeroLine ? 0 : na, linewidth=2, color=color.maroon, title="Zero Line")
+res = ((baseSymbol/baseSymbol[length])/(comparativeSymbol/comparativeSymbol[length]) - 1)
+resColor = toggleRSColor ? res > 0 ? color.green : color.red : color.blue
+plot(res, title="RS", linewidth=2, color= resColor)
+refDay = showRefDateLbl and barstate.islast ? dayofmonth(time[length]) : na
+refMonth = showRefDateLbl and barstate.islast ? month(time[length]) : na
+refYear = showRefDateLbl and barstate.islast ? year(time[length]) : na
+refLabelStyle = res[length] > 0 ? label.style_label_up : label.style_label_down
+refDateLabel = showRefDateLbl and barstate.islast ? label.new(bar_index - length, 0, text="RS-" + tostring(length) + " reference, " + tostring(refDay) + "-" + tostring(refMonth) + "-" + tostring(refYear), color=color.blue, style=refLabelStyle, yloc=yloc.price) : na
+plot(showMA ? sma(res, lengthMA) : na, color=color.gray, title="MA")
